@@ -17,6 +17,7 @@ Update the machine-global bootstrap files when any of these change in `ai-stack`
 - `.opencode/commands/*`
 - `.opencode/plugins/*`
 - `.opencode/scripts/*`
+- `docs/opencode/graphify-notes-template.md`
 - `docs/opencode/mcp-workflows.md`
 - `docs/opencode/runtime-notes.md`
 - `GRAPHIFY_NOTES.md`

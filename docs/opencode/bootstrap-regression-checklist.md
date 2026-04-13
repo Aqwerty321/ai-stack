@@ -14,6 +14,7 @@ Confirm the new repo contains:
 
 - `AGENTS.md`
 - `GRAPHIFY_NOTES.md`
+- confirm `GRAPHIFY_NOTES.md` does not mention `ai-stack` or any other unrelated repo name
 - `docs/opencode/mcp-workflows.md`
 - `docs/opencode/runtime-notes.md`
 - `.opencode/agents/mcp-orchestrator.md`
