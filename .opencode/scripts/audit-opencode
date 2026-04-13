@@ -22,6 +22,7 @@ check_file() {
 }
 
 check_file "$repo_root/AGENTS.md"
+check_file "$repo_root/GRAPHIFY_NOTES.md"
 check_file "$repo_root/opencode.json"
 check_file "$repo_root/docs/opencode/mcp-workflows.md"
 check_file "$repo_root/docs/opencode/runtime-notes.md"

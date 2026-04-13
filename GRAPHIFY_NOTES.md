@@ -56,3 +56,8 @@ This is a repo-local cleanup layer in `.opencode/scripts/graphify_repo_overlay.p
 The local runtime has been relaxed to allow large HTML graph export attempts instead of failing immediately at the upstream hard node cap.
 
 This does not guarantee the HTML will always be pleasant on very large repos, but it avoids unnecessary hard failure for cases where a large generated HTML artifact is still acceptable.
+
+## Related Docs
+
+- `docs/opencode/bootstrap-maintenance.md` tracks the machine-global bootstrap files that also need manual sync.
+- `docs/opencode/bootstrap-regression-checklist.md` captures the regression checks to run after bootstrap or Graphify changes.
