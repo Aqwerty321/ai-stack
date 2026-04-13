@@ -14,27 +14,30 @@ Use this skill when the task involves gathering context efficiently across multi
 
 ## Core Pairings
 
-### Search + Scrape
+### Firecrawl + SearXNG
 
 For external knowledge:
 
-1. Use `searxng-local` first to discover the right page.
-2. Use `firecrawl-local` second to extract the exact details needed.
-3. Avoid broad scraping before the target page is known.
-4. Prefer structured extraction for fields, parameters, endpoints, and lists.
+1. Use `firecrawl-local_search` first when result quality matters or you expect to scrape follow-up pages.
+2. Use `searxng-local_search_web` or `searxng-local_answer_web` when a quick answer or shortlist is enough.
+3. Use `firecrawl-local_map` when the correct page inside a docs site is unclear.
+4. Use `firecrawl-local_scrape` for a known URL; prefer JSON-style extraction for fields, parameters, endpoints, and lists.
+5. Use `firecrawl-local_extract` when multiple known URLs should become one structured result.
+6. Use `firecrawl-local_agent` or `firecrawl-local_browser_*` only for dynamic, JS-heavy, or multi-step web work.
 
 ### Graph + Memory
 
 For repo knowledge:
 
 1. Use `graphify-local_graph_stats` and `graphify-local_god_nodes` for orientation.
-2. Use `graphify-local_query_graph` for broad structural questions.
-3. Use `graphify-local_get_node` and `graphify-local_get_neighbors` for focused drilldown.
-4. Use `graphify-local_shortest_path` for explicit connection questions.
-5. Use `graphify-local_get_community` when a graph report or wiki points to a promising cluster.
-6. Use `neo4j-memory-local` for prior decisions, durable facts, and continuity.
-7. Combine both when you need to connect a code entity to prior work or decisions.
-8. Keep memory repo-scoped and avoid duplicating whole graph structure.
+2. Use `graphify-local_query_graph` with `bfs` for broad structural questions.
+3. Use `graphify-local_query_graph` with `dfs` when tracing a narrower dependency or propagation path.
+4. Use `graphify-local_get_node` and `graphify-local_get_neighbors` for focused drilldown.
+5. Use `graphify-local_shortest_path` for explicit connection questions.
+6. Use `graphify-local_get_community` when a graph report or wiki points to a promising cluster.
+7. Use `neo4j-memory-local` for prior decisions, durable facts, and continuity.
+8. Combine both when you need to connect a code entity to prior work or decisions.
+9. Keep memory repo-scoped and avoid duplicating whole graph structure.
 
 ## Efficiency Rules
 

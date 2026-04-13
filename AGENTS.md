@@ -2,9 +2,9 @@
 
 This repo is a local AI tooling stack with four MCP servers already available in OpenCode:
 
-- `graphify-local` for repo structure and code-graph traversal
-- `searxng-local` for search-oriented web lookup and ranked document retrieval
-- `firecrawl-local` for direct web scraping, extraction, and site mapping
+- `graphify-local` for repo structure, topology, communities, and graph drilldown
+- `searxng-local` for lightweight web lookup and cited answer synthesis
+- `firecrawl-local` for high-quality web search, scraping, site mapping, structured extraction, agent research, and browser automation
 - `neo4j-memory-local` for persistent memory, preferences, facts, and session continuity
 
 ## MCP Usage Rules
@@ -23,14 +23,16 @@ Choose tools by information type instead of by habit.
   - user preferences
   - session continuity
   - durable implementation notes worth remembering
-- Use `searxng-local` for:
-  - quick web search
-  - documentation discovery
-  - broad external recall before scraping
 - Use `firecrawl-local` for:
+  - primary external web discovery when result quality matters or you expect to scrape follow-up pages
   - scraping a known URL
-  - structured extraction from docs/pages
+  - structured extraction from one or more known docs/pages
   - site mapping when docs are spread across many pages
+  - autonomous research or browser automation only when simpler search/map/scrape flows are not enough
+- Use `searxng-local` for:
+  - lightweight web lookup
+  - quick cited answers
+  - cross-checking or narrowing a query without heavier scraping
 
 Do not use web tools for questions that can be answered from the code graph or repo files.
 
@@ -53,22 +55,28 @@ For repo-internal implementation work:
 
 For external API or library work:
 
-1. Use `searxng-local` to find the right docs.
-2. Use `firecrawl-local` to extract the exact fields, endpoints, parameters, or examples.
-3. Persist only the durable takeaway to `neo4j-memory-local` if it is likely to matter again.
+1. Use `firecrawl-local_search` when you want the best current result set or expect to scrape follow-up pages. Use `searxng-local` when a quick lightweight answer or shortlist is enough.
+2. Use `firecrawl-local_map` when the correct page inside a docs site is unclear.
+3. Use `firecrawl-local_scrape` for a known URL. Use JSON-style extraction for exact fields or parameters, and markdown only when the full page content is what you need.
+4. Use `firecrawl-local_extract` when you already have multiple URLs and want one structured result.
+5. Use `firecrawl-local_agent` or `firecrawl-local_browser_*` only for multi-step, heavily dynamic, or JS-rendered research that simpler flows do not handle well.
+6. Persist only the durable takeaway to `neo4j-memory-local` if it is likely to matter again.
 
 ## MCP Pairings
 
 Use the MCPs in deliberate pairs when the task benefits from it.
 
-### SearXNG + Firecrawl
+### Firecrawl + SearXNG
 
-Treat these as a discovery-plus-extraction pair.
+Treat these as a web-discovery-and-extraction stack.
 
-- use `searxng-local` to find the right documentation or page
-- use `firecrawl-local` to extract the exact fields, examples, or paragraphs needed
-- avoid broad scraping when search has not narrowed the target page yet
-- prefer structured extraction when the user wants exact parameters, endpoints, fields, or lists
+- use `firecrawl-local_search` for primary discovery when you need strong result quality or expect to scrape follow-up pages
+- use `searxng-local_answer_web` or `searxng-local_search_web` when a lightweight cited answer or quick cross-check is enough
+- use `firecrawl-local_map` to find the right page inside a docs site before scraping broadly
+- use `firecrawl-local_scrape` on a known URL; prefer structured JSON extraction for exact fields, parameters, endpoints, prices, or lists
+- use `firecrawl-local_extract` when you already know multiple URLs and want one structured extraction pass
+- use `firecrawl-local_agent` only when search/map/scrape is still insufficient or the task inherently spans many sources
+- use `firecrawl-local_browser_*` for deterministic browser interaction, debugging dynamic pages, or stateful navigation
 
 ### Graphify + Neo4j Memory
 
@@ -82,7 +90,8 @@ Treat these as a structure-plus-continuity pair.
 ### Graphify Tool Routing
 
 - start with `graphify-local_graph_stats` and `graphify-local_god_nodes` when you need fast repo orientation
-- use `graphify-local_query_graph` for open-ended structural questions like "how do these parts fit together"
+- use `graphify-local_query_graph` with `bfs` for open-ended structural questions like "how do these parts fit together"
+- use `graphify-local_query_graph` with `dfs` when tracing a narrower dependency or propagation path through a subsystem
 - use `graphify-local_get_node` and `graphify-local_get_neighbors` when the user names a symbol, file, agent, command, skill, or MCP explicitly
 - use `graphify-local_shortest_path` for "what connects X and Y" questions
 - use `graphify-local_get_community` after `GRAPH_REPORT.md`, `graph.html`, or `graphify-out/wiki/index.md` points at a relevant cluster
@@ -150,6 +159,7 @@ Bad memory writes:
 - trust it for repo-internal structure
 - do not expect it to know unrelated files outside the indexed project
 - if the graph appears stale after major code movement, rebuild the graph artifacts before trusting topology answers
+- `graphify-local_graph_stats`, `graphify-local_god_nodes`, `graphify-local_get_node`, `graphify-local_get_neighbors`, `graphify-local_get_community`, and `graphify-local_shortest_path` are all part of the normal routing surface, not specialist-only tools
 - `graphify-out/GRAPH_REPORT.md` is the cheapest orientation artifact; read it before broad repo searching when it answers the question
 - `graphify-out/wiki/index.md` is the best crawlable entry point when the graph has already been rebuilt
 - use repo-local graph commands like `/graph-report`, `/graph-query`, and `/graph-path` when they fit the task more directly than manual tool selection
