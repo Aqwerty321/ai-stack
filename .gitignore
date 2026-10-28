@@ -9,8 +9,44 @@ wheels/
 # Virtual environments
 .venv
 
-# Generated Graphify artifacts
+# Generated graph artifacts
 graphify-out/
+graphkv-out/
 
 # Local logs
 *.log
+
+# GraphKV / OpenCode generated artifacts
+/graphify-out/
+/graphkv-out/
+/.graphkv/
+/.opencode/package-lock.json
+
+# Claude Code per-user settings
+.claude/settings.local.json
+
+# Local runtime output, recordings and transcripts
+/out/
+/generated_3d_models/
+/playwright-output/
+/.cache/
+/received_audio.wav
+/conversation.jsonl
+/user_text.txt
+/agent_text.txt
+/SKILL.md
+*.bak-*
+
+# Unpublished 3D research (private until the paper is out)
+/research/
+/scripts/thinbench/
+/scripts/surface_lifting/*
+!/scripts/surface_lifting/gpu_runtime.py
+/scripts/multiview/
+/scripts/trellis/
+/docs/trellis/
+/docs/3d-lab/
+
+# Machine-local notes and tooling (not published)
+*.local.md
+/scripts/local/
