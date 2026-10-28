@@ -1,0 +1,72 @@
+[
+  {
+    "id": "interval_merge_review",
+    "category": "algorithms",
+    "prompt": "You are reviewing a Python function that merges overlapping intervals. Return: 1. A short explanation of the correct greedy strategy. 2. A Python implementation. 3. Time and space complexity. 4. One tricky edge case. Keep it concise but technically solid.",
+    "max_tokens": 420,
+    "temperature": 0.1
+  },
+  {
+    "id": "longest_common_prefix",
+    "category": "strings",
+    "prompt": "Write a compact Python function that returns the longest common prefix of a list of strings, then explain it in 3 bullets.",
+    "max_tokens": 260,
+    "temperature": 0.0
+  },
+  {
+    "id": "sql_debug",
+    "category": "debugging",
+    "prompt": "A SQL query meant to return one row per user is producing duplicates after joining orders and order_items. Explain the likely cause in 3 bullets and show one corrected query pattern using aggregation or EXISTS.",
+    "max_tokens": 320,
+    "temperature": 0.1
+  },
+  {
+    "id": "api_design",
+    "category": "api_design",
+    "prompt": "Design a minimal REST API for a todo app with projects and tasks. Return: endpoints, example JSON payloads, and 3 design notes about idempotency, pagination, and validation.",
+    "max_tokens": 420,
+    "temperature": 0.1
+  },
+  {
+    "id": "bash_bugfix",
+    "category": "bash",
+    "prompt": "A bash script starts with `for f in $(ls *.log); do gzip $f; done` and breaks on spaces in file names. Explain the bug and rewrite it safely in shell.",
+    "max_tokens": 220,
+    "temperature": 0.0
+  },
+  {
+    "id": "python_bug_review",
+    "category": "python",
+    "prompt": "Review this Python snippet and fix the bug concisely:\n\n```python\ndef append_item(x, items=[]):\n    items.append(x)\n    return items\n```\n\nExplain the root cause and provide the corrected code.",
+    "max_tokens": 220,
+    "temperature": 0.0
+  },
+  {
+    "id": "system_design_cache",
+    "category": "systems",
+    "prompt": "In 6 short bullets, explain how you would cache product pages for an ecommerce site with frequent price changes. Mention cache invalidation, TTLs, and stale reads.",
+    "max_tokens": 260,
+    "temperature": 0.1
+  },
+  {
+    "id": "regex_reasoning",
+    "category": "regex",
+    "prompt": "Write a regex that matches a simple semantic version like 1.2.3 with an optional suffix like -rc1, and explain each part briefly. Do not over-generalize beyond that requirement.",
+    "max_tokens": 220,
+    "temperature": 0.0
+  },
+  {
+    "id": "git_recovery",
+    "category": "git",
+    "prompt": "A developer committed to the wrong branch locally and has not pushed yet. Give the safest recovery steps using non-interactive git commands, and explain why each step is safe.",
+    "max_tokens": 260,
+    "temperature": 0.0
+  },
+  {
+    "id": "complexity_reasoning",
+    "category": "reasoning",
+    "prompt": "Compare breadth-first search and depth-first search for finding the shortest path in an unweighted graph. Give: when BFS is correct, when DFS is not, complexity, and one tiny example graph.",
+    "max_tokens": 320,
+    "temperature": 0.0
+  }
+]

@@ -1,0 +1,15 @@
+#!/usr/bin/env zsh
+set -euo pipefail
+
+set -a
+[ -f /home/Aaditya/.config/neo4j-memory.env ] && source /home/Aaditya/.config/neo4j-memory.env
+set +a
+
+exec /home/Aaditya/venvs/neo4j-agent-memory/bin/neo4j-agent-memory mcp serve \
+  --uri "$NEO4J_URI" \
+  --user "$NEO4J_USER" \
+  --transport http \
+  --host 127.0.0.1 \
+  --port 3010 \
+  --profile extended \
+  --password "$NEO4J_PASSWORD"

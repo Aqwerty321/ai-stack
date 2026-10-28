@@ -1,0 +1,208 @@
+#!/usr/bin/env zsh
+set -euo pipefail
+
+readonly usage="Usage: ai-profile <status|retrieval|blank|voicechat|trellis2|multiview|hunyuan3d|hunyuan-paint|triposg|3d-lab|gemma|muse|ornith9>"
+typeset -a retrieval_services
+typeset -a exclusive_inference_services
+typeset -a always_on_services
+typeset -a status_services
+
+retrieval_services=(
+  rag-embed.service
+  rag-rerank.service
+  local-reasoner.service
+  neo4j-memory-mcp.service
+)
+
+exclusive_inference_services=(
+  nemotron-voicechat.service
+  trellis2-3d.service
+  gemma4-vllm.service
+  muse-glimmer.service
+  ornith9-vllm.service
+)
+
+
+# CPU-only System-1 decision router. Stays up in every profile (never stopped)
+# so gates/routing decisions are always available. See docs/laya/.
+always_on_services=(
+  laya-decide.service
+)
+
+status_services=(
+  "${retrieval_services[@]}"
+  "${exclusive_inference_services[@]}"
+  "${always_on_services[@]}"
+)
+
+stop_services() {
+  (( $# == 0 )) && return 0
+  systemctl --user stop "$@"
+}
+
+start_services() {
+  (( $# == 0 )) && return 0
+  systemctl --user start "$@"
+}
+
+# Health URL per service; empty means the service has no HTTP endpoint of its own.
+typeset -A health_urls
+health_urls=(
+  rag-embed.service          http://127.0.0.1:8001/health
+  rag-rerank.service         http://127.0.0.1:8002/health
+  local-reasoner.service     http://127.0.0.1:8000/v1/models
+  neo4j-memory-mcp.service   http://127.0.0.1:3010/
+  nemotron-voicechat.service http://127.0.0.1:8080/
+  trellis2-3d.service        ""
+  gemma4-vllm.service        http://127.0.0.1:8000/v1/models
+  muse-glimmer.service       http://127.0.0.1:8000/v1/models
+  ornith9-vllm.service       http://127.0.0.1:8000/v1/models
+  laya-decide.service        http://127.0.0.1:8008/healthz
+)
+
+# Name the profile implied by a set of GPU model services (active now, or enabled at boot).
+infer_profile() {
+  local -a on=("$@")
+  local svc
+  for svc in nemotron-voicechat trellis2-3d gemma4-vllm muse-glimmer ornith9-vllm; do
+    if (( ${on[(Ie)$svc.service]} )); then
+      case $svc in
+        nemotron-voicechat) print voicechat ;;
+        trellis2-3d) print trellis2 ;;
+        gemma4-vllm) print gemma ;;
+        muse-glimmer) print muse ;;
+        ornith9-vllm) print ornith9 ;;
+      esac
+      return
+    fi
+  done
+  local -a missing=()
+  for svc in rag-embed.service rag-rerank.service local-reasoner.service; do
+    (( ${on[(Ie)$svc]} )) || missing+=(${svc%.service})
+  done
+  if (( ${#missing} == 0 )); then print retrieval
+  elif (( ${#missing} == 3 )); then print "blank (GPU free)"
+  else print "retrieval, partial (missing: ${(j:, :)missing})"
+  fi
+}
+
+show_status() {
+  local svc enabled active url code health
+  local -a active_set=() enabled_set=()
+  for svc in "${status_services[@]}"; do
+    [[ $(systemctl --user is-active $svc) == active ]] && active_set+=($svc)
+    [[ $(systemctl --user is-enabled $svc 2>/dev/null) == enabled ]] && enabled_set+=($svc)
+  done
+  local -a jobs=(${(f)"$(systemctl --user list-units --state=active --plain --no-legend 'surface-lifting-gpu-*' | awk '{print $1}')"})
+
+  print "Profile now:   $(infer_profile "${active_set[@]}")"
+  print "Boot default:  $(infer_profile "${enabled_set[@]}")"
+  if (( ${#jobs} )); then
+    print "gpu-exclusive: RUNNING (${(j:, :)jobs}); prior services restore when it exits"
+  else
+    print "gpu-exclusive: idle"
+  fi
+
+  print "\nService                     boot      state     health"
+  for svc in "${status_services[@]}"; do
+    enabled=$(systemctl --user is-enabled $svc 2>/dev/null || true)
+    active=$(systemctl --user is-active $svc || true)
+    url=${health_urls[$svc]}
+    if [[ -z $url || $active != active ]]; then health="-"
+    else
+      code=$(curl -s -o /dev/null -m 2 -w '%{http_code}' $url || true)
+      case $code in 200) health=ok ;; 000) health="not answering (warming up?)" ;; *) health="up (http $code)" ;; esac
+    fi
+    printf '%-27s %-9s %-9s %s\n' ${svc%.service} ${enabled:-?} $active "$health"
+  done
+
+  print "\nGPU"
+  nvidia-smi --query-gpu=name,memory.used,memory.total,utilization.gpu,temperature.gpu,power.draw \
+    --format=csv,noheader,nounits 2>/dev/null \
+    | awk -F', ' '{printf "  %s: %d / %d MiB used, %s%% util, %s C, %s W\n", $1, $2, $3, $4, $5, $6}' \
+    || print "  nvidia-smi unavailable"
+  # process_name can hold a whole command line with commas, so read pid and memory only.
+  local pid mem name unit
+  nvidia-smi --query-compute-apps=pid,used_memory --format=csv,noheader,nounits 2>/dev/null \
+    | while IFS=', ' read -r pid mem; do
+        name=$(ps -o comm= -p $pid 2>/dev/null || print '?')
+        unit=$(grep -o '[^/]*\.\(service\|scope\)$' /proc/$pid/cgroup 2>/dev/null | head -1 || true)
+        printf '  %6s MiB  pid %-8s %-16s %s\n' $mem $pid $name "${unit:0:60}"
+      done
+
+  print "\nDisk"
+  local free=$(df -BG --output=avail / | awk 'NR==2{gsub("G",""); print $1}')
+  printf '  /: %s GiB free' $free
+  if (( free < 100 )); then print "  (BELOW 100 GiB floor: research jobs stop)"
+  elif (( free < 120 )); then print "  (below 120 GiB: warning)"
+  else print "  (ok)"
+  fi
+  local next=$(systemctl --user show research-backup.timer -p NextElapseUSecRealtime --value 2>/dev/null)
+  local last=$(systemctl --user show research-backup.service -p ExecMainExitTimestamp --value 2>/dev/null)
+  local result=$(systemctl --user show research-backup.service -p Result --value 2>/dev/null)
+  print "  Drive backup: last ${last:-never} (${result:-?}), next ${next:-not scheduled}"
+}
+
+if [[ ${1:-} == status ]]; then
+  show_status
+  exit 0
+fi
+
+if [[ $# -ne 1 ]]; then
+  print "$usage"
+  exit 1
+fi
+
+profile="$1"
+
+case "$profile" in
+  retrieval)
+    stop_services "${exclusive_inference_services[@]}"
+    start_services "${retrieval_services[@]}"
+    ;;
+  blank|multiview|hunyuan3d|hunyuan-paint|triposg|3d-lab)
+    # Batch 3D profiles reserve the GPU; 3d-lab helpers load the selected
+    # isolated environment on demand and restore retrieval after each job.
+    # Free the GPU for compute (e.g. the CUDA solver): stop every GPU-resident
+    # model. The no-GPU memory MCP bridge and the CPU router stay up, so the
+    # editor's MCP connection is never killed -- embedding-backed memory calls
+    # just fail until `ai-profile retrieval` restores rag-embed/rag-rerank.
+    stop_services "${exclusive_inference_services[@]}" \
+      rag-embed.service rag-rerank.service local-reasoner.service
+    start_services neo4j-memory-mcp.service
+    ;;
+  voicechat)
+    stop_services "${exclusive_inference_services[@]}" \
+      rag-rerank.service local-reasoner.service
+    start_services neo4j-memory-mcp.service
+    start_services rag-embed.service nemotron-voicechat.service
+    ;;
+  trellis2)
+    stop_services "${retrieval_services[@]}" "${exclusive_inference_services[@]}"
+    start_services trellis2-3d.service
+    ;;
+  gemma)
+    stop_services "${retrieval_services[@]}" "${exclusive_inference_services[@]}"
+    start_services gemma4-vllm.service
+    ;;
+  muse)
+    stop_services "${retrieval_services[@]}" "${exclusive_inference_services[@]}"
+    start_services muse-glimmer.service
+    ;;
+  ornith9)
+    stop_services "${retrieval_services[@]}" "${exclusive_inference_services[@]}"
+    start_services ornith9-vllm.service
+    ;;
+  *)
+    print "$usage"
+    exit 1
+    ;;
+esac
+
+# Laya is CPU-only and profile-independent: ensure it is running in every profile.
+start_services "${always_on_services[@]}"
+
+# Informational only: `systemctl status` exits non-zero when any unit is
+# inactive (always true for e.g. blank mode), so never let it fail the profile
+# switch or callers like ai-god-route that check the exit code.
+systemctl --user --no-pager --plain status "${status_services[@]}" || true

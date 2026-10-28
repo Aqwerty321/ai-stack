@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+# gpu-exclusive: run one command with the whole GPU, then restore the retrieval profile.
+#
+# Wraps ai-stack/scripts/surface_lifting/gpu_runtime.py. The job runs in a transient
+# systemd user unit whose ExecStopPost restores exactly the GPU services that were
+# active before (rag-embed, rag-rerank, local-reasoner), waiting for HTTP health.
+# Restoration happens even if the caller (an agent session, a terminal) dies.
+# laya-decide and neo4j-memory-mcp stay up; embedding-backed memory calls fail
+# until restore completes.
+#
+# Usage: gpu-exclusive [-n NAME] [-t TIMEOUT_S] [-m HOST_RAM_GIB] -- command args...
+# Logs and lifecycle state: ~/.cache/3d-lab/gpu-runs/<timestamp>-<name>/
+set -euo pipefail
+
+name=job timeout=1800 ram=24
+while getopts "n:t:m:h" opt; do
+  case "$opt" in
+    n) name="$OPTARG" ;;
+    t) timeout="$OPTARG" ;;
+    m) ram="$OPTARG" ;;
+    *) sed -n '2,13p' "$0"; exit 2 ;;
+  esac
+done
+shift $((OPTIND - 1))
+[[ "${1:-}" == "--" ]] && shift
+(( $# > 0 )) || { sed -n '2,13p' "$0"; exit 2; }
+
+out="$HOME/.cache/3d-lab/gpu-runs/$(date +%Y%m%dT%H%M%S)-${name//[^A-Za-z0-9_.-]/_}"
+exec /usr/bin/python3 -I /home/Aaditya/ai-stack/scripts/surface_lifting/gpu_runtime.py \
+  --out "$out" --timeout "$timeout" --host-memory-gib "$ram" -- "$@"

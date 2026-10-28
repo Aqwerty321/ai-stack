@@ -1,0 +1,19 @@
+#!/usr/bin/env zsh
+set -euo pipefail
+
+export VLLM_NVFP4_GEMM_BACKEND=cutlass
+
+exec "/home/Aaditya/venvs/vllm-nightly/bin/vllm" serve \
+  "/home/Aaditya/models/RedHatAI-gemma-4-26B-A4B-it-NVFP4" \
+  --host 0.0.0.0 \
+  --port 8000 \
+  --served-model-name gemma4-26b-a4b-nvfp4 \
+  --max-model-len 6144 \
+  --gpu-memory-utilization 0.80 \
+  --max-num-seqs 1 \
+  --max-num-batched-tokens 6144 \
+  --generation-config vllm \
+  --enable-auto-tool-choice \
+  --tool-call-parser gemma4 \
+  --kv-cache-dtype fp8 \
+  --trust-remote-code

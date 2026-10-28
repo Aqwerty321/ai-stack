@@ -1,0 +1,22 @@
+#!/usr/bin/env zsh
+set -euo pipefail
+
+LLAMA_DIR="/home/Aaditya/.local/opt/llama.cpp-b10513"
+MODEL_PATH="/home/Aaditya/models/Qwen3-Embedding-0.6B-GGUF/Qwen3-Embedding-0.6B-Q8_0.gguf"
+
+export LD_LIBRARY_PATH="${LLAMA_DIR}/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}"
+
+exec "${LLAMA_DIR}/bin/llama-server" \
+  -m "${MODEL_PATH}" \
+  -a qwen3-embedding-0_6b-q8_0 \
+  --host 0.0.0.0 \
+  --port 8001 \
+  --embedding \
+  --pooling last \
+  -ngl 99 \
+  -c 4096 \
+  -b 4096 \
+  -ub 4096 \
+  -np 1 \
+  --no-webui \
+  --log-timestamps

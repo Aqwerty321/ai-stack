@@ -1,0 +1,17 @@
+[Unit]
+Description=Nemotron VoiceChat realtime speech service (127.0.0.1:8080)
+After=network-online.target
+Wants=network-online.target
+Conflicts=gemma4-vllm.service local-reasoner.service muse-glimmer.service ornith9-vllm.service rag-rerank.service trellis-3d.service
+
+[Service]
+Type=simple
+ExecStart=/home/Aaditya/bin/nemotron-voicechat-start
+Restart=on-failure
+RestartSec=5
+TimeoutStartSec=1800
+TimeoutStopSec=45
+WorkingDirectory=/home/Aaditya/.local/opt/NeMo-Speech.cpp
+
+[Install]
+WantedBy=default.target

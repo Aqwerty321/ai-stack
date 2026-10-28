@@ -1,0 +1,15 @@
+[Unit]
+Description=vLLM Gemma 4 NVFP4 local server
+After=default.target
+Conflicts=local-reasoner.service muse-glimmer.service ornith9-vllm.service rag-embed.service rag-rerank.service
+
+[Service]
+Type=simple
+ExecStart=/home/Aaditya/bin/gemma4-vllm-start
+Restart=on-failure
+RestartSec=5
+WorkingDirectory=/home/Aaditya
+Environment=PYTORCH_NVML_BASED_CUDA_CHECK=1
+
+[Install]
+WantedBy=default.target

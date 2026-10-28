@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>VoiceChat Browser</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <div class="aurora-backdrop" aria-hidden="true"></div>
+
+      <header class="topbar">
+        <div class="brand-wrap">
+          <div class="brand-icon">V</div>
+          <div>
+            <div class="brand">Voice Lab</div>
+            <div class="brand-sub">Browser-owned audio, local memory/tool bridge</div>
+          </div>
+        </div>
+
+        <div class="topbar-right">
+          <input id="sessionName" type="text" placeholder="session name" />
+          <button id="connectBtn" class="call-button">Start Session</button>
+          <button id="muteBtn" class="round-control" aria-pressed="false">Mute</button>
+          <button id="pttBtn" class="round-control">Hold to Talk</button>
+          <button id="saveSessionBtn" class="icon-button">Save</button>
+          <button id="loadSessionBtn" class="icon-button">Load</button>
+          <span id="statusBadge" class="state-pill">idle</span>
+        </div>
+      </header>
+
+      <main>
+        <section class="page-heading">
+          <div>
+            <div class="eyebrow"><span class="eyebrow-line"></span>LOCAL VOICE WORKSPACE</div>
+            <h1><span>Natural voice sessions</span> with transcripts, tools, and memory.</h1>
+            <p>
+              The browser owns microphone capture and playback. The local bridge handles memory retrieval,
+              tool execution, session logs, and long-context compaction.
+            </p>
+          </div>
+        </section>
+
+        <section class="console-grid" aria-label="Voice workspace">
+          <div class="voice-panel glass">
+            <div class="panel-top">
+              <span class="section-label">Realtime Session</span>
+              <span id="liveLabel" class="state-pill">standby</span>
+            </div>
+
+            <div class="orb-stage">
+              <div class="orbit orbit-one"></div>
+              <div class="orbit orbit-two"></div>
+              <div class="orb-glow"></div>
+              <div class="orb-visual" id="orbVisual">
+                <div class="orb-fallback"></div>
+                <div class="orb-center">AUDIO</div>
+              </div>
+              <div class="orb-caption"><span class="sparkle-dot"></span><span id="phaseCaption">Idle</span></div>
+            </div>
+
+            <div class="session-prompt">
+              <span class="micro-label">SESSION STATUS</span>
+              <h2 id="stateLabel">Ready to connect</h2>
+              <p id="warningText">Use the browser path when local desktop playback is unreliable.</p>
+            </div>
+
+            <div class="call-controls">
+              <button id="secondaryMuteBtn" class="round-control">Mic</button>
+              <button id="primaryActionBtn" class="call-button">Start</button>
+              <button id="secondaryPttBtn" class="round-control">PTT</button>
+            </div>
+
+            <div class="session-strip">
+              <div>
+                <span class="strip-icon">TIME</span>
+                <div>
+                  <span class="micro-label">duration</span>
+                  <strong id="durationValue">00:00</strong>
+                </div>
+              </div>
+              <div>
+                <span class="strip-icon">AUDIO</span>
+                <div>
+                  <span class="micro-label">mic state</span>
+                  <strong id="micStateValue">disconnected</strong>
+                </div>
+              </div>
+              <div class="strip-wave" id="waveMeter" aria-hidden="true"></div>
+            </div>
+          </div>
+
+          <aside class="conversation-panel glass">
+            <div class="conversation-heading">
+              <span class="section-label">Transcript</span>
+              <div class="panel-actions">
+                <button id="autoscrollBtn" class="scroll-toggle" aria-pressed="false">Pause scroll</button>
+              </div>
+            </div>
+
+            <div class="tabs" role="tablist" aria-label="Conversation panel">
+              <button id="transcriptTab" class="tab-button is-active" data-tab="transcript">Live transcript</button>
+              <button id="guideTab" class="tab-button" data-tab="guide">Guide</button>
+            </div>
+
+            <div id="transcriptPanel" class="transcript-scroll panel-content is-active">
+              <div id="messages" class="messages"></div>
+              <div id="emptyTranscript" class="empty-transcript">
+                <div class="empty-illustration">
+                  <div class="chat-outline chat-back"></div>
+                  <div class="chat-outline chat-front"><i></i><i></i><i></i></div>
+                  <div class="tiny-star">*</div>
+                </div>
+                <h3>No transcript yet</h3>
+                <p>Connect a session and start talking. User and assistant turns will stream here.</p>
+              </div>
+            </div>
+
+            <div id="guidePanel" class="guide-panel panel-content">
+              <h3>Browser session guide</h3>
+              <div class="guide-step"><span>01</span><div><h4>Connect</h4><p>Choose a session name and connect. The bridge loads the local memory context for that session.</p></div></div>
+              <div class="guide-step"><span>02</span><div><h4>Talk naturally</h4><p>The browser owns the microphone and speaker path. Use the PTT button if you want press-and-hold capture.</p></div></div>
+              <div class="guide-step"><span>03</span><div><h4>Watch tools and memory</h4><p>Tool calls, memory retrieval, and compaction summaries appear in the side panels as they happen.</p></div></div>
+            </div>
+
+            <div class="transcript-footer">
+              <span class="dot mint"></span>
+              <span id="footerStatus">idle</span>
+            </div>
+          </aside>
+        </section>
+
+        <section class="feature-row">
+          <div>
+            <div class="feature-icon">MEM</div>
+            <div>
+              <h3>Memory status</h3>
+              <p id="memoryStatusSummary">No session loaded yet.</p>
+            </div>
+          </div>
+          <div>
+            <div class="feature-icon">TOOL</div>
+            <div>
+              <h3>Tool activity</h3>
+              <p id="toolStatusSummary">No tool calls yet.</p>
+            </div>
+          </div>
+          <div>
+            <div class="feature-icon">LOG</div>
+            <div>
+              <h3>Saved logs</h3>
+              <p id="logStatusSummary">Session logs are written locally.</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="grid-secondary">
+          <section class="side-panel glass">
+            <div class="side-panel-heading">Session / Memory Status</div>
+            <pre id="status"></pre>
+          </section>
+          <section class="side-panel glass">
+            <div class="side-panel-heading">Tool Calls</div>
+            <pre id="toolCalls"></pre>
+          </section>
+          <section class="side-panel glass wide-panel">
+            <div class="side-panel-heading">Conversation Log</div>
+            <pre id="conversation"></pre>
+          </section>
+        </section>
+      </main>
+    </div>
+    <script src="/app.js"></script>
+  </body>
+  </html>

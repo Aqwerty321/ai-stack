@@ -1,0 +1,17 @@
+[Unit]
+Description=vLLM Ornith 1.5 9B NVFP4 local server
+After=network-online.target
+Wants=network-online.target
+Conflicts=gemma4-vllm.service local-reasoner.service muse-glimmer.service rag-embed.service rag-rerank.service
+
+[Service]
+Type=simple
+ExecStart=/home/Aaditya/bin/ornith9-vllm-start
+Restart=no
+TimeoutStartSec=1800
+TimeoutStopSec=45
+WorkingDirectory=/home/Aaditya
+Environment=PYTORCH_NVML_BASED_CUDA_CHECK=1
+
+[Install]
+WantedBy=default.target

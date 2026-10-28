@@ -1,0 +1,17 @@
+#!/usr/bin/env zsh
+# trellis2-3d — experimental TRELLIS.2 image->3D GPU daemon shell.
+# This is intentionally separate from the stable TRELLIS v1 text->3D path.
+set -euo pipefail
+
+VENV="/home/Aaditya/venvs/trellis2"
+TRELLIS2_SRC="/home/Aaditya/.local/opt/TRELLIS.2"
+
+export CUDA_HOME="/opt/cuda"
+export PATH="${CUDA_HOME}/bin:${PATH}"
+export LD_LIBRARY_PATH="${CUDA_HOME}/lib64:${LD_LIBRARY_PATH:-}"
+export TORCH_CUDA_ARCH_LIST="12.0"
+export PYTHONUNBUFFERED=1
+export PYTHONPATH="${TRELLIS2_SRC}:${PYTHONPATH:-}"
+
+echo "[trellis2-3d] experimental wrapper placeholder; no daemon implemented yet"
+exec "${VENV}/bin/python" -c 'print("trellis2 experimental wrapper is staged but no serving daemon has been validated yet")'

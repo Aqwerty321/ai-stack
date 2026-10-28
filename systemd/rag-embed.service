@@ -1,0 +1,15 @@
+[Unit]
+Description=RAG embedding service (llama.cpp)
+After=default.target
+Conflicts=gemma4-vllm.service
+
+[Service]
+Type=simple
+ExecStart=/home/Aaditya/bin/rag-embed-start
+Restart=on-failure
+RestartSec=5
+WorkingDirectory=/home/Aaditya
+Environment=PYTORCH_NVML_BASED_CUDA_CHECK=1
+
+[Install]
+WantedBy=default.target

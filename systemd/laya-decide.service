@@ -1,0 +1,16 @@
+[Unit]
+Description=Laya System-1 typed-decision router (always-on)
+After=default.target
+# Intentionally NO Conflicts= with exclusive model services: Laya must survive
+# profile switches by falling back to CPU. See docs/laya/LAYA_DECISION_SERVICE_DESIGN.md.
+
+[Service]
+Type=simple
+ExecStart=/home/Aaditya/bin/laya-decide-start
+Restart=on-failure
+RestartSec=5
+WorkingDirectory=/home/Aaditya
+Environment=PYTORCH_NVML_BASED_CUDA_CHECK=1
+
+[Install]
+WantedBy=default.target

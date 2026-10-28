@@ -1,0 +1,17 @@
+[Unit]
+Description=Muse Glimmer 30B K-Quant multimodal server
+After=default.target
+Conflicts=gemma4-vllm.service local-reasoner.service ornith9-vllm.service rag-embed.service rag-rerank.service
+
+[Service]
+Type=simple
+ExecStart=/home/Aaditya/bin/muse-glimmer-start
+Restart=on-failure
+RestartSec=5
+LimitCORE=0
+TimeoutStartSec=600
+TimeoutStopSec=45
+WorkingDirectory=/home/Aaditya
+
+[Install]
+WantedBy=default.target

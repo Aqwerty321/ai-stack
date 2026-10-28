@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# Free space on /home in GiB. Exit 1 below the floor (DISK_GUARD_FLOOR_GIB, default 100).
+# --notify: desktop warning below DISK_GUARD_WARN_GIB (default 120); run every 15 min by disk-guard.timer.
+warn=${DISK_GUARD_WARN_GIB:-120}; floor=${DISK_GUARD_FLOOR_GIB:-100}
+free=$(( $(df --output=avail -B1 /home | tail -1) / 1073741824 ))
+if [ "${1:-}" = "--notify" ] && [ "$free" -lt "$warn" ]; then
+  notify-send -u critical "Disk low: ${free} GiB free" "GPU research jobs stop below ${floor} GiB. Free space with: research-offload <cold dir>"
+fi
+echo "$free"
+[ "$free" -ge "$floor" ]

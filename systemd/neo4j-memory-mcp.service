@@ -1,0 +1,16 @@
+[Unit]
+Description=Neo4j Agent Memory MCP HTTP server
+After=neo4j-memory-docker.service
+Requires=neo4j-memory-docker.service
+PartOf=neo4j-memory-docker.service
+
+[Service]
+Type=simple
+ExecStart=/home/Aaditya/bin/neo4j-memory-mcp-http
+Restart=on-failure
+RestartSec=5
+WorkingDirectory=/home/Aaditya
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=default.target

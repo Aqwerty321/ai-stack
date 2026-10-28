@@ -1,0 +1,33 @@
+#!/usr/bin/env zsh
+# laya-decide — always-on System-1 typed-decision router.
+# Auto-selects GPU in retrieval mode, falls back to CPU when an exclusive
+# model profile (gemma/muse/ornith9) owns the GPU, so Laya stays always-on.
+set -euo pipefail
+
+VENV="/home/Aaditya/venvs/laya"
+SERVER="/home/Aaditya/bin/laya-decide-server.py"
+
+export LAYA_HOST="127.0.0.1"
+export LAYA_PORT="8008"
+export LAYA_PACK_DIR="/home/Aaditya/bin/laya-packs"
+export LAYA_LOG="/home/Aaditya/ai-stack/out/ai-stack/laya/decisions.jsonl"
+export LAYA_PRELOAD="1"
+
+# Bound CPU threads. Laya runs CPU-side co-tenant with the retrieval services
+# (local-reasoner/embed/rerank). Unbounded torch oversubscribes cores and causes
+# ~4 s tail-latency spikes; capping keeps gate latency stable and leaves cores for
+# the other services.
+export OMP_NUM_THREADS="${OMP_NUM_THREADS:-6}"
+export MKL_NUM_THREADS="${MKL_NUM_THREADS:-6}"
+export LAYA_TORCH_THREADS="${LAYA_TORCH_THREADS:-6}"
+
+# Device selection: CPU by default.
+# Measured reality on this box: even in retrieval mode local-reasoner (vLLM) holds
+# ~19 GB and only ~4-5 GB VRAM is free and fragments under load, so Laya OOMs on CUDA
+# and falls back to CPU anyway. Warm CPU is ~135 ms/call, fine for a reflex gate, and
+# guarantees Laya never contends with any GPU model profile. Set LAYA_DEVICE=cuda to
+# force GPU only when you know the GPU is idle (no model profile active).
+export LAYA_DEVICE="${LAYA_DEVICE:-cpu}"
+
+echo "[laya-decide] device=${LAYA_DEVICE} port=${LAYA_PORT}"
+exec "${VENV}/bin/python" "${SERVER}"

@@ -1,0 +1,7 @@
+[Unit]
+Description=Warn when free space on /home drops below 120 GiB
+
+[Service]
+Type=oneshot
+ExecStart=/home/Aaditya/bin/disk-guard --notify
+SuccessExitStatus=1

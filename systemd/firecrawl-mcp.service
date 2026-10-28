@@ -1,0 +1,16 @@
+[Unit]
+Description=Official Firecrawl MCP HTTP server
+After=firecrawl-docker.service
+Requires=firecrawl-docker.service
+PartOf=firecrawl-docker.service
+
+[Service]
+Type=simple
+ExecStart=/home/Aaditya/bin/firecrawl-mcp-http
+Restart=on-failure
+RestartSec=5
+WorkingDirectory=/home/Aaditya
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=default.target

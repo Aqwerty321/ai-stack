@@ -1,0 +1,11 @@
+#!/usr/bin/env zsh
+set -euo pipefail
+
+set -a
+[ -f /home/Aaditya/.config/neo4j-memory.env ] && source /home/Aaditya/.config/neo4j-memory.env
+set +a
+
+exec docker compose \
+  --project-directory "/home/Aaditya/services/neo4j-memory" \
+  -f "/home/Aaditya/services/neo4j-memory/docker-compose.yaml" \
+  "$@"

@@ -1,0 +1,22 @@
+#!/usr/bin/env zsh
+set -euo pipefail
+
+readonly install_root="/home/Aaditya/.local/opt/NeMo-Speech.cpp"
+readonly model_root="/home/Aaditya/models/NVIDIA-NemotronLabs-VoiceChat-11B-NVFP4-GGUF"
+readonly bin_path="${install_root}/build/cuda-s2s/bin/nemo-speech"
+
+# Upstream EarTTS reserves a much larger per-stream KV budget than this 24 GB
+# laptop needs for interactive sessions. Trim it so the NVFP4 bundle has room
+# for runtime buffers while still preserving roughly 100 seconds of assistant
+# decode headroom after prompt prefill.
+export S2S_TTS_POSITIONS_PER_SEQUENCE=4096
+export RNNT_MAX_AGENT_RESPONSE_SEC=12
+
+exec "${bin_path}" serve \
+  --host 127.0.0.1 \
+  --port 8080 \
+  --no-ui \
+  --threads 4 \
+  --device cuda:0 \
+  --s2s-model-dir "${model_root}" \
+  --s2s-max-streams 1

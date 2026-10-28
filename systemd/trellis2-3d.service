@@ -1,0 +1,16 @@
+[Unit]
+Description=TRELLIS.2 experimental image-to-3D GPU daemon shell
+After=network-online.target
+Wants=network-online.target
+Conflicts=gemma4-vllm.service muse-glimmer.service ornith9-vllm.service local-reasoner.service nemotron-voicechat.service trellis-3d.service
+
+[Service]
+Type=simple
+ExecStart=/home/Aaditya/bin/trellis2-3d-start
+Restart=on-failure
+RestartSec=5
+WorkingDirectory=/home/Aaditya/.local/opt/TRELLIS.2
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=default.target

@@ -1,0 +1,16 @@
+#!/usr/bin/env zsh
+set -euo pipefail
+
+export NVM_DIR="$HOME/.nvm"
+[ -s /usr/share/nvm/init-nvm.sh ] && . /usr/share/nvm/init-nvm.sh
+
+export HTTP_STREAMABLE_SERVER=true
+export FIRECRAWL_API_URL="http://127.0.0.1:3002"
+export HOST=127.0.0.1
+export PORT=3000
+
+# Pinned: firecrawl-mcp >=3.21 sends hosted-only search fields (highlights, toolDetail,
+# domainTools, alexandria sources) that the self-hosted API at :3002 rejects or ignores,
+# so firecrawl_search fails. 3.20.6 is the newest version verified against the local API
+# (2026-10-17). Re-test before bumping: search AND scrape must both return results.
+exec npx -y firecrawl-mcp@3.20.6

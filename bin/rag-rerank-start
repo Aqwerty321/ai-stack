@@ -1,0 +1,13 @@
+#!/usr/bin/env zsh
+set -euo pipefail
+
+exec "/home/Aaditya/venvs/vllm-nightly/bin/vllm" serve \
+  "Qwen/Qwen3-Reranker-0.6B" \
+  --host 0.0.0.0 \
+  --port 8002 \
+  --served-model-name qwen3-reranker-0.6b \
+  --runner pooling \
+  --max-model-len 4096 \
+  --gpu-memory-utilization 0.16 \
+  --hf-overrides '{"architectures": ["Qwen3ForSequenceClassification"], "classifier_from_token": ["no", "yes"], "is_original_qwen3_reranker": true}' \
+  --chat-template "/home/Aaditya/.config/vllm/templates/qwen3_reranker.jinja"

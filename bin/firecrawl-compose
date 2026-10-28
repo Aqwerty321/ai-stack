@@ -1,0 +1,11 @@
+#!/usr/bin/env zsh
+set -euo pipefail
+
+host_dns_server=$(awk '/^nameserver / && $2 !~ /^127\./ { print $2; exit }' /etc/resolv.conf)
+export FIRECRAWL_DNS_SERVER="${FIRECRAWL_DNS_SERVER:-${host_dns_server:-1.1.1.1}}"
+
+exec docker compose \
+  --project-directory "/home/Aaditya/services/firecrawl" \
+  -f "/home/Aaditya/services/firecrawl/docker-compose.yaml" \
+  -f "/home/Aaditya/services/firecrawl/docker-compose.override.yml" \
+  "$@"

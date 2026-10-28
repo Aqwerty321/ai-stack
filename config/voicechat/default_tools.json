@@ -1,0 +1,65 @@
+[
+  {
+    "name": "compact_conversation_context",
+    "description": "Condense the conversation into a carry-over summary and continue after compaction.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "focus": {
+          "type": "string",
+          "description": "Optional focus for what should be preserved."
+        }
+      },
+      "required": []
+    },
+    "ack_messages": [
+      "Give me a moment to condense our conversation so I can keep going."
+    ]
+  },
+  {
+    "name": "recall_relevant_memory",
+    "description": "Search persistent memory for relevant details from earlier in this session or prior sessions.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "query": {
+          "type": "string",
+          "description": "What to look up in memory."
+        },
+        "scope": {
+          "type": "string",
+          "description": "Optional search scope such as session or global."
+        }
+      },
+      "required": [
+        "query"
+      ]
+    },
+    "ack_messages": [
+      "Let me check what I remember."
+    ]
+  },
+  {
+    "name": "remember_note",
+    "description": "Store a concise note in persistent memory.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "note": {
+          "type": "string",
+          "description": "The fact or preference to remember."
+        },
+        "category": {
+          "type": "string",
+          "description": "Optional category such as preference, fact, or plan."
+        }
+      },
+      "required": [
+        "note"
+      ]
+    },
+    "ack_messages": [
+      "I'll remember that."
+    ]
+  }
+]

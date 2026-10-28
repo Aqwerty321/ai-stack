@@ -1,0 +1,15 @@
+#!/usr/bin/env zsh
+set -euo pipefail
+
+export HF_HOME="${HF_HOME:-/home/Aaditya/.cache/huggingface}"
+
+exec "/home/Aaditya/venvs/vllm-nightly/bin/vllm" serve \
+  "Firworks/Qwen3-4B-Instruct-2507-nvfp4" \
+  --host 0.0.0.0 \
+  --port 8000 \
+  --served-model-name qwen3-4b-instruct-2507-nvfp4 \
+  --max-model-len 16384 \
+  --gpu-memory-utilization 0.40 \
+  --max-num-seqs 4 \
+  --max-num-batched-tokens 8192 \
+  --api-key dummy

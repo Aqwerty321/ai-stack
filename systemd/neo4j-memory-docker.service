@@ -1,0 +1,15 @@
+[Unit]
+Description=Neo4j memory Docker Compose stack
+After=docker.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/home/Aaditya/bin/neo4j-memory-compose up -d
+ExecStop=/home/Aaditya/bin/neo4j-memory-compose down
+WorkingDirectory=/home/Aaditya/services/neo4j-memory
+TimeoutStartSec=0
+
+[Install]
+WantedBy=default.target
