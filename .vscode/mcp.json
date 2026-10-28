@@ -1,0 +1,13 @@
+{
+  "servers": {
+    "graphkvLocal": {
+      "type": "stdio",
+      "command": "/home/Aaditya/GraphKV-Engine/mcp-server/run_search_server.sh",
+      "args": [],
+      "env": {
+        "GRAPHKV_WORKSPACE_ROOTS": "${workspaceFolder}:/home/Aaditya/GraphKV-Engine",
+        "GRAPHKV_ARTIFACT_DIR_NAME": "graphkv-out"
+      }
+    }
+  }
+}

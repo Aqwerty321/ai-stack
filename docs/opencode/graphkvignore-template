@@ -1,0 +1,35 @@
+# GraphKV ignore file
+#
+# Agents may append repo-specific generated, vendored, dependency, fixture,
+# cache, or build-output folders before running `.opencode/scripts/build-graphkv`.
+# Keep patterns repo-relative. Directory patterns should end with `/`.
+# Glob patterns are supported, and `!pattern` can re-include after a previous match.
+#
+# Good candidates to append when present:
+# - generated SDKs or API clients
+# - checked-out dependency source trees
+# - benchmark corpora, fixtures, model files, and large data dumps
+# - build products, coverage output, cache folders, and vendored frontend packages
+
+.cache/
+.graphkv/
+.next/
+.pytest_cache/
+.ruff_cache/
+.turbo/
+.venv/
+__pycache__/
+build/
+build-*/
+coverage/
+dist/
+graphify-out/
+graphkv-out/
+htmlcov/
+node_modules/
+out/
+target/
+tmp/
+venv/
+vendor/
+third_party/

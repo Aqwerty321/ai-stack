@@ -1,14 +1,14 @@
-# Graphify Notes
+# GraphKV Notes
 
 ## Runtime Pin
 
-This repo currently targets the local Graphify runtime in:
+This repo currently targets the local GraphKV runtime in:
 
 - `/home/Aaditya/venvs/graphify`
 
 Pinned operational version:
 
-- `graphifyy 0.4.12`
+- `GraphKV search MCP`
 
 ## Why 0.4.12
 
@@ -43,7 +43,7 @@ Even on `0.4.12`, bootstrapped repos may keep local wrapper logic for things ups
 
 Presentation outputs may be generated from a filtered view graph.
 
-The raw `graphify-out/graph.json` can keep the full merged graph, while presentation outputs such as `GRAPH_REPORT.md`, `graph.html`, and `wiki/` may intentionally drop low-value nodes that make reports noisy.
+The raw `graphkv-out/graph.json` can keep the full merged graph, while presentation outputs such as `GRAPH_REPORT.md`, `graph.html`, and `wiki/` may intentionally drop low-value nodes that make reports noisy.
 
 This behavior is repo-local and lives in `.opencode/scripts/graphify_repo_overlay.py`.
 

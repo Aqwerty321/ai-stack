@@ -6,12 +6,12 @@ Yes, augmenting the current stack with a structural graph plus persistent memory
 
 The version that best fits this machine is not:
 
-- Graphify + full MDEMG + Qdrant + current retrieval stack all introduced at once
+- GraphKV + full MDEMG + Qdrant + current retrieval stack all introduced at once
 
 The version that best fits this machine is:
 
 - Web plane: existing `SearXNG` + `Firecrawl`
-- Structural plane: `Graphify`
+- Structural plane: `GraphKV`
 - Memory plane: `Neo4j`-backed memory
 - Retrieval plane: existing local embedder + reranker
 - Reasoning plane: current OpenCode model and/or local Gemma profile
@@ -24,7 +24,7 @@ Already running or available now:
 
 - `gemma4-vllm.service` for local Gemma inference
 - `rag-embed.service` using `llama.cpp` when the retrieval profile is active
-- `rag-rerank.service` using `Qwen3-Reranker-4B` via `vLLM` when the retrieval profile is active
+- `rag-rerank.service` using `Qwen3-Reranker-0.6B` via `vLLM` when the retrieval profile is active
 - `searxng_mcp.py` already using the local embedder and reranker for search ranking
 - self-hosted `Firecrawl` backend via Docker
 - `firecrawl-mcp.service` exposed to OpenCode at `http://127.0.0.1:3000/mcp`
@@ -46,7 +46,7 @@ The original chat was directionally useful, but it assumed a stack that does not
 
 The corrected version is:
 
-- `Graphify` is a structural compiler for the codebase, not a long-term memory brain
+- `GraphKV` is a structural compiler for the codebase, not a long-term memory brain
 - persistent memory should be a separate layer, not a duplicate copy of all structural facts
 - the current embedder and reranker should remain the relevance gate
 - web retrieval should stay separate from code graph and memory retrieval
@@ -54,9 +54,9 @@ The corrected version is:
 
 ## Recommended Architecture
 
-### 1. Structural Truth: Graphify
+### 1. Structural Truth: GraphKV
 
-Use `Graphify` for:
+Use `GraphKV` for:
 
 - AST-derived structure
 - file, symbol, and relationship discovery
@@ -123,7 +123,7 @@ Keep using:
 
 Role of this plane in the augmented stack:
 
-- rerank candidates coming from `Graphify`
+- rerank candidates coming from `GraphKV`
 - rerank candidates coming from memory search
 - merge structural, semantic, and memory candidates into a small final context
 
@@ -151,7 +151,7 @@ Do not persist raw scrape dumps or whole search result pages into memory automat
 
 Keep the boundaries sharp.
 
-- `Graphify` owns structural truth about the codebase
+- `GraphKV` owns structural truth about the codebase
 - `Neo4j` memory owns persistent task, user, and reasoning memory
 - the current embedder and reranker own semantic recall and pruning
 - `SearXNG` + `Firecrawl` own live web retrieval
@@ -163,7 +163,7 @@ Do not let two systems be authoritative for the same raw fact.
 ### Code Question
 
 1. Classify the question as code-structure-heavy.
-2. Query `Graphify` output first for communities, exact paths, or neighborhood context.
+2. Query `GraphKV` output first for communities, exact paths, or neighborhood context.
 3. Pull matching memory items from `Neo4j` only if prior decisions or past work are relevant.
 4. Convert the candidate set into small text snippets.
 5. Use the existing reranker to cut that set down aggressively.
@@ -187,7 +187,7 @@ Do not let two systems be authoritative for the same raw fact.
 ### Structural Update
 
 - code changes happen
-- `Graphify` updates its local graph artifacts
+- `GraphKV` updates its local graph artifacts
 - a bridge later imports only selected high-signal structure into `Neo4j` if needed
 
 ### Memory Update
@@ -210,7 +210,7 @@ Good candidates:
 
 - file summaries
 - function or class summaries
-- community summaries from `Graphify`
+- community summaries from `GraphKV`
 - architectural decisions
 - recurring fixes
 - task observations
@@ -256,7 +256,7 @@ Do nothing disruptive to:
 - `searxng_mcp.py`
 - Firecrawl + SearXNG
 
-### Phase 1: Add Graphify Only
+### Phase 1: Add GraphKV Only
 
 Goal:
 
@@ -264,7 +264,7 @@ Goal:
 
 Actions:
 
-- install `Graphify` in a separate env
+- install `GraphKV` in a separate env
 - run it manually on the repo first
 - inspect `GRAPH_REPORT.md`, `graph.json`, and optional wiki output
 - do not install its always-on OpenCode plugin yet
@@ -299,7 +299,7 @@ Goal:
 
 Actions:
 
-- import selected `Graphify` entities or summaries into `Neo4j`
+- import selected `GraphKV` entities or summaries into `Neo4j`
 - create links from memory nodes to code entities
 - embed only high-signal nodes
 
@@ -316,8 +316,8 @@ Goal:
 
 Actions:
 
-- build a small orchestrator that merges candidates from `Graphify`, memory, and optional web sources
-- rerank the merged set with the existing `Qwen3-Reranker-4B`
+- build a small orchestrator that merges candidates from `GraphKV`, memory, and optional web sources
+- rerank the merged set with the existing `Qwen3-Reranker-0.6B`
 
 Success criteria:
 
@@ -333,7 +333,7 @@ Why defer it:
 
 - it overlaps with current web and retrieval responsibilities
 - its public README assumes its own embedding choices (`OpenAI` or `Ollama`)
-- it also wants to own codebase ingestion, which can blur the boundary with `Graphify`
+- it also wants to own codebase ingestion, which can blur the boundary with `GraphKV`
 
 If evaluated later, treat it as:
 
@@ -344,16 +344,16 @@ If evaluated later, treat it as:
 
 Best fit for the current machine and stack:
 
-1. Add `Graphify` first.
+1. Add `GraphKV` first.
 2. If it proves useful, add `Neo4j` memory next.
 3. Use `neo4j-agent-memory` as the first persistent memory implementation.
 4. Keep the existing local embedder + reranker as the shared retrieval gate.
 5. Skip `Qdrant` for now.
-6. Defer the full `MDEMG` product until you can prove you need more than `Graphify + Neo4j + current retrieval`.
+6. Defer the full `MDEMG` product until you can prove you need more than `GraphKV + Neo4j + current retrieval`.
 
 ## Sources Checked
 
-- `Graphify` README v4 and current project docs
+- `GraphKV` README v4 and current project docs
 - `MDEMG` public README
 - `Neo4j Agent Memory` docs and README
 - current Neo4j Cypher `SEARCH` documentation for vector search and filtering

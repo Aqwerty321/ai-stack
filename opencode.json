@@ -2,22 +2,71 @@
   "$schema": "https://opencode.ai/config.json",
   "instructions": [
     "./docs/opencode/mcp-workflows.md",
-    "./docs/opencode/runtime-notes.md"
+    "./docs/opencode/runtime-notes.md",
+    "./AGENTS.local.md",
+    "./docs/opencode/*.local.md"
   ],
   "plugin": [
-    ".opencode/plugins/graphify.js"
+    ".opencode/plugins/graphkv.js"
   ],
   "mcp": {
-    "graphify-local": {
+    "graphkv-local": {
       "type": "local",
       "enabled": true,
       "command": [
-        "/home/Aaditya/venvs/graphify/bin/python",
-        "-m",
-        "graphify.serve",
-        "/home/Aaditya/ai-stack/graphify-out/graph.json"
+        "/home/Aaditya/GraphKV-Engine/mcp-server/run_search_server.sh"
       ],
-      "environment": {}
+      "environment": {
+        "GRAPHKV_WORKSPACE_ROOTS": "/home/Aaditya/ai-stack:/home/Aaditya/GraphKV-Engine",
+        "GRAPHKV_ARTIFACT_DIR_NAME": "graphkv-out"
+      }
+    },
+    "searxng-local": {
+      "type": "local",
+      "enabled": true,
+      "command": [
+        "uv",
+        "run",
+        "/home/Aaditya/ai-stack/searxng_mcp.py"
+      ],
+      "environment": {
+        "USE_RERANKER": "true",
+        "EMBED_URL": "http://127.0.0.1:8001/v1/embeddings",
+        "EMBED_MODEL": "qwen3-embedding-0_6b-q8_0",
+        "RERANK_URL": "http://127.0.0.1:8002/rerank",
+        "RERANK_MODEL": "qwen3-reranker-0.6b",
+        "FIRECRAWL_SEARCH_URL": "http://127.0.0.1:3002/v1/search"
+      }
+    },
+    "firecrawl-local": {
+      "type": "remote",
+      "enabled": true,
+      "url": "http://127.0.0.1:3000/mcp",
+      "timeout": 20000
+    },
+    "react-bits-local": {
+      "type": "local",
+      "enabled": true,
+      "command": [
+        "uv",
+        "run",
+        "/home/Aaditya/react-bits-mcp/scripts/react_bits_mcp.py"
+      ],
+      "environment": {
+        "REACT_BITS_EMBED_BASE_URL": "http://127.0.0.1:8001",
+        "REACT_BITS_EMBED_MODEL": "qwen3-embedding-0_6b-q8_0",
+        "REACT_BITS_RERANK_URL": "http://127.0.0.1:8002/rerank",
+        "REACT_BITS_RERANK_MODEL": "qwen3-reranker-0.6b"
+      }
+    },
+    "trellis-3d-local": {
+      "type": "local",
+      "enabled": true,
+      "command": [
+        "uv",
+        "run",
+        "/home/Aaditya/ai-stack/scripts/trellis/trellis_mcp.py"
+      ]
     }
   }
 }

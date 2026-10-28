@@ -1,0 +1,18 @@
+{
+  "mcpServers": {
+    "graphkv-local": {
+      "type": "stdio",
+      "command": "/home/Aaditya/GraphKV-Engine/mcp-server/run_search_server.sh",
+      "args": [],
+      "env": {
+        "GRAPHKV_WORKSPACE_ROOTS": "/home/Aaditya/ai-stack:/home/Aaditya/GraphKV-Engine",
+        "GRAPHKV_ARTIFACT_DIR_NAME": "graphkv-out"
+      }
+    },
+    "trellis-3d-local": {
+      "type": "stdio",
+      "command": "uv",
+      "args": ["run", "/home/Aaditya/ai-stack/scripts/trellis/trellis_mcp.py"]
+    }
+  }
+}

@@ -22,12 +22,16 @@ check_file() {
 }
 
 check_file "$repo_root/AGENTS.md"
-check_file "$repo_root/GRAPHIFY_NOTES.md"
+check_file "$repo_root/GRAPHKV_NOTES.md"
+check_file "$repo_root/.graphkvignore"
 check_file "$repo_root/opencode.json"
+check_file "$repo_root/.vscode/mcp.json"
 check_file "$repo_root/docs/opencode/mcp-workflows.md"
 check_file "$repo_root/docs/opencode/runtime-notes.md"
+check_file "$repo_root/docs/opencode/graphkvignore-template"
 check_file "$repo_root/.opencode/skills/mcp-research/SKILL.md"
 check_file "$repo_root/.opencode/skills/repo-triage/SKILL.md"
+check_file "$repo_root/.opencode/skills/project-bootstrap/SKILL.md"
 check_file "$repo_root/.opencode/agents/mcp-orchestrator.md"
 check_file "$repo_root/.opencode/agents/mcp-researcher.md"
 check_file "$repo_root/.opencode/agents/repo-surgeon.md"
@@ -37,10 +41,21 @@ check_file "$repo_root/.opencode/commands/repo-research.md"
 check_file "$repo_root/.opencode/commands/graph-report.md"
 check_file "$repo_root/.opencode/commands/graph-query.md"
 check_file "$repo_root/.opencode/commands/graph-path.md"
-check_file "$repo_root/.opencode/plugins/graphify.js"
-check_file "$repo_root/.opencode/scripts/build-graphify"
+check_file "$repo_root/.opencode/plugins/graphkv.js"
+check_file "$repo_root/.opencode/scripts/build-graphkv"
 check_file "$repo_root/.opencode/scripts/audit-opencode"
-check_file "$repo_root/.opencode/scripts/graphify_repo_overlay.py"
+check_file "$repo_root/.github/prompts/project-bootstrap.prompt.md"
+check_file "$repo_root/.github/prompts/graph-report.prompt.md"
+check_file "$repo_root/.github/prompts/graph-query.prompt.md"
+check_file "$repo_root/.github/prompts/graph-path.prompt.md"
+check_file "$repo_root/.github/prompts/mcp-audit.prompt.md"
+check_file "$repo_root/.github/prompts/refresh-graph.prompt.md"
+check_file "$repo_root/.github/prompts/repo-research.prompt.md"
+check_file "$repo_root/.github/prompts/council.prompt.md"
+check_file "$repo_root/graphkv-out/graph.json"
+check_file "$repo_root/graphkv-out/GRAPH_REPORT.md"
+check_file "$repo_root/graphkv-out/graph.html"
+check_file "$repo_root/graphkv-out/wiki/index.md"
 
 python3 - "$repo_root" <<'PY'
 import json
@@ -67,16 +82,46 @@ if missing:
         print(f"  - {item}")
 
 plugins = config.get("plugin", [])
-if ".opencode/plugins/graphify.js" not in plugins:
-    print("MISS plugin registration: .opencode/plugins/graphify.js")
+if ".opencode/plugins/graphkv.js" not in plugins:
+    print("MISS plugin registration: .opencode/plugins/graphkv.js")
 
-graph = config.get("mcp", {}).get("graphify-local")
+graph = config.get("mcp", {}).get("graphkv-local")
 if graph:
     cmd = graph.get("command", [])
-    print("INFO graphify-local configured:")
+    print("INFO graphkv-local configured:")
     print("  " + " ".join(cmd))
 else:
-    print("INFO graphify-local not configured in opencode.json")
+    print("MISS graphkv-local not configured in opencode.json")
+
+vscode_mcp = repo_root / ".vscode" / "mcp.json"
+if vscode_mcp.exists():
+    vscode_config = json.loads(vscode_mcp.read_text())
+    if "graphkvLocal" not in vscode_config.get("servers", {}):
+        print("MISS graphkvLocal not configured in .vscode/mcp.json")
+PY
+
+# Claude Code wiring is reported as INFO so repos bootstrapped before it existed still pass.
+python3 - "$repo_root" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+repo_root = Path(sys.argv[1])
+claude_md = repo_root / "CLAUDE.md"
+if not claude_md.exists():
+    print("INFO claude: CLAUDE.md missing (rerun opencode-project-init to scaffold)")
+elif "@AGENTS.md" not in claude_md.read_text():
+    print("INFO claude: CLAUDE.md does not import @AGENTS.md")
+else:
+    print("OK   claude: CLAUDE.md imports AGENTS.md")
+
+claude_mcp = repo_root / ".mcp.json"
+if not claude_mcp.exists():
+    print("INFO claude: .mcp.json missing (build-graphkv writes it)")
+elif "graphkv-local" not in json.loads(claude_mcp.read_text()).get("mcpServers", {}):
+    print("INFO claude: graphkv-local not configured in .mcp.json")
+else:
+    print("OK   claude: graphkv-local configured in .mcp.json")
 PY
 
 if [[ $status_ok -eq 0 ]]; then

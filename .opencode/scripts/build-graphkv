@@ -1,0 +1,207 @@
+#!/usr/bin/env zsh
+set -euo pipefail
+
+start_path="$PWD"
+max_files="${GRAPHKV_MAX_FILES:-2500}"
+ignore_patterns=()
+
+usage() {
+    cat <<'USAGE'
+Usage: build-graphkv [options] [path]
+
+Options:
+    --ignore PATTERN       Append a repo-relative pattern to .graphkvignore before building; repeatable.
+    --graphkv-ignore PATTERN
+                           Alias for --ignore, useful from bootstrap workflows.
+    --max-files N          Maximum source files to scan for this build. Defaults to GRAPHKV_MAX_FILES or 2500.
+    --help, -h             Show this help.
+
+.graphkvignore uses repo-relative gitignore-like patterns. Prefer adding generated, vendored, dependency, fixture, cache, and build-output folders before running expensive graph builds.
+USAGE
+}
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --ignore|--graphkv-ignore)
+            [[ $# -ge 2 ]] || { print "--ignore requires a pattern" >&2; exit 2; }
+            ignore_patterns+=("$2")
+            shift 2
+            ;;
+        --max-files)
+            [[ $# -ge 2 ]] || { print "--max-files requires a number" >&2; exit 2; }
+            max_files="$2"
+            shift 2
+            ;;
+        --help|-h)
+            usage
+            exit 0
+            ;;
+        *)
+            start_path="$1"
+            shift
+            ;;
+    esac
+done
+
+if git -C "$start_path" rev-parse --show-toplevel >/dev/null 2>&1; then
+  repo_root="$(git -C "$start_path" rev-parse --show-toplevel)"
+else
+  repo_root="$(realpath "$start_path")"
+fi
+
+graphkv_root="/home/Aaditya/GraphKV-Engine"
+artifact_dir="$repo_root/graphkv-out"
+ignore_file="$repo_root/.graphkvignore"
+
+if [[ ! -f "$ignore_file" ]]; then
+    if [[ -f "$repo_root/docs/opencode/graphkvignore-template" ]]; then
+        cp "$repo_root/docs/opencode/graphkvignore-template" "$ignore_file"
+    else
+        python3 - "$ignore_file" <<'PY'
+import sys
+from pathlib import Path
+
+Path(sys.argv[1]).write_text("# GraphKV ignore file\n# Add repo-relative generated, dependency, cache, fixture, and build-output folders here.\n\ngraphkv-out/\nnode_modules/\n.venv/\nvenv/\nbuild/\ndist/\n", encoding="utf-8")
+PY
+    fi
+fi
+
+if (( ${#ignore_patterns[@]} > 0 )); then
+    python3 - "$ignore_file" "${ignore_patterns[@]}" <<'PY'
+import sys
+from pathlib import Path
+
+ignore_path = Path(sys.argv[1])
+patterns = [pattern.strip() for pattern in sys.argv[2:] if pattern.strip()]
+existing_text = ignore_path.read_text(encoding="utf-8") if ignore_path.exists() else ""
+existing = {line.strip() for line in existing_text.splitlines() if line.strip() and not line.lstrip().startswith("#")}
+lines = existing_text.splitlines()
+new_patterns = [pattern for pattern in patterns if pattern not in existing]
+if new_patterns:
+    if lines and lines[-1] != "":
+        lines.append("")
+    lines.append("# Added by build-graphkv --ignore")
+    lines.extend(new_patterns)
+    ignore_path.write_text("\n".join(lines).rstrip() + "\n", encoding="utf-8")
+PY
+fi
+
+python3 "$graphkv_root/tools/build_graphkv_artifacts.py" "$repo_root" --output-dir "$artifact_dir" --ignore-file "$ignore_file" --max-files "$max_files"
+
+python3 - "$repo_root" "$graphkv_root" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+repo_root = Path(sys.argv[1])
+graphkv_root = Path(sys.argv[2])
+config_path = repo_root / "opencode.json"
+graph_path = repo_root / "graphkv-out" / "graph.json"
+
+if not graph_path.exists():
+    raise SystemExit("GraphKV build finished without graphkv-out/graph.json")
+
+config = {}
+if config_path.exists():
+    try:
+        config = json.loads(config_path.read_text())
+    except json.JSONDecodeError as exc:
+        raise SystemExit(f"Existing opencode.json is not strict JSON: {exc}")
+
+instructions = config.setdefault("instructions", [])
+for item in ["./docs/opencode/mcp-workflows.md", "./docs/opencode/runtime-notes.md"]:
+    if item not in instructions:
+        instructions.append(item)
+
+plugins = config.setdefault("plugin", [])
+if ".opencode/plugins/graphify.js" in plugins:
+    plugins.remove(".opencode/plugins/graphify.js")
+if ".opencode/plugins/graphkv.js" not in plugins:
+    plugins.append(".opencode/plugins/graphkv.js")
+
+mcp = config.setdefault("mcp", {})
+mcp.pop("graphify-local", None)
+mcp["graphkv-local"] = {
+    "type": "local",
+    "enabled": True,
+    "command": [
+        str(graphkv_root / "mcp-server" / "run_search_server.sh"),
+    ],
+    "environment": {
+        "GRAPHKV_WORKSPACE_ROOTS": f"{repo_root}:{graphkv_root}",
+        "GRAPHKV_ARTIFACT_DIR_NAME": "graphkv-out",
+    },
+}
+
+config_path.write_text(json.dumps(config, indent=2) + "\n")
+PY
+
+python3 - "$repo_root" "$graphkv_root" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+repo_root = Path(sys.argv[1])
+graphkv_root = Path(sys.argv[2])
+vscode_dir = repo_root / ".vscode"
+vscode_dir.mkdir(parents=True, exist_ok=True)
+vscode_mcp_path = vscode_dir / "mcp.json"
+
+config = {"servers": {}}
+if vscode_mcp_path.exists():
+    try:
+        config = json.loads(vscode_mcp_path.read_text())
+    except json.JSONDecodeError as exc:
+        raise SystemExit(f"Existing .vscode/mcp.json is not strict JSON: {exc}")
+
+servers = config.setdefault("servers", {})
+servers.pop("graphifyLocal", None)
+servers["graphkvLocal"] = {
+    "type": "stdio",
+    "command": str(graphkv_root / "mcp-server" / "run_search_server.sh"),
+    "args": [],
+    "env": {
+        "GRAPHKV_WORKSPACE_ROOTS": "${workspaceFolder}:/home/Aaditya/GraphKV-Engine",
+        "GRAPHKV_ARTIFACT_DIR_NAME": "graphkv-out",
+    },
+}
+
+vscode_mcp_path.write_text(json.dumps(config, indent=2) + "\n")
+PY
+
+python3 - "$repo_root" "$graphkv_root" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+repo_root = Path(sys.argv[1])
+graphkv_root = Path(sys.argv[2])
+claude_mcp_path = repo_root / ".mcp.json"
+
+config = {"mcpServers": {}}
+if claude_mcp_path.exists():
+    try:
+        config = json.loads(claude_mcp_path.read_text())
+    except json.JSONDecodeError as exc:
+        raise SystemExit(f"Existing .mcp.json is not strict JSON: {exc}")
+
+servers = config.setdefault("mcpServers", {})
+servers["graphkv-local"] = {
+    "type": "stdio",
+    "command": str(graphkv_root / "mcp-server" / "run_search_server.sh"),
+    "args": [],
+    "env": {
+        "GRAPHKV_WORKSPACE_ROOTS": f"{repo_root}:{graphkv_root}",
+        "GRAPHKV_ARTIFACT_DIR_NAME": "graphkv-out",
+    },
+}
+
+claude_mcp_path.write_text(json.dumps(config, indent=2) + "\n")
+PY
+
+print "Built GraphKV artifacts in $artifact_dir"
+print "Updated $repo_root/opencode.json with graphkv-local"
+print "Updated $repo_root/.vscode/mcp.json with graphkvLocal"
+print "Updated $repo_root/.mcp.json with graphkv-local (Claude Code)"
+print "Using ignore file $ignore_file"
+print "Refreshed GraphKV report, HTML view, and wiki index"

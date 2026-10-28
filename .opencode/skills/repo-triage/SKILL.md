@@ -28,12 +28,13 @@ Use this skill at the start of non-trivial repo tasks to choose the right retrie
 
 ### Structural
 
-- start with `graphify-local_graph_stats` or `graphify-local_god_nodes` if you need orientation
-- use `graphify-local_query_graph` with `bfs` for broad relationship questions
-- use `graphify-local_query_graph` with `dfs` for narrower dependency or propagation tracing
-- use `graphify-local_get_node` and `graphify-local_get_neighbors` once the entity is known
-- use `graphify-local_shortest_path` for explicit connection questions
-- use `graphify-local_get_community` after graph report or wiki orientation
+- start with `graphkv-local_graph_stats` or `graphkv-local_god_nodes` if you need orientation
+- use `graphkv-local_query_graph` with `bfs` for broad relationship questions
+- use `graphkv-local_query_graph` with `dfs` for narrower dependency or propagation tracing
+- use `graphkv-local_get_node` and `graphkv-local_get_neighbors` once the entity is known
+- use `graphkv-local_shortest_path` for explicit connection questions
+- use `graphkv-local_get_community` after graph report or wiki orientation
+- before rebuilding stale graph artifacts, append unhelpful generated, vendored, dependency, fixture, cache, and build-output folders to `.graphkvignore`
 - use local file reads once the relevant nodes/files are known
 
 ### Memory / Continuity
@@ -43,12 +44,12 @@ Use this skill at the start of non-trivial repo tasks to choose the right retrie
 
 ### External Docs
 
-- start with `firecrawl-local_search` when you want the best results or expect to scrape follow-up pages
+- start with `firecrawl-local_firecrawl_search` when you want the best results or expect to scrape follow-up pages
 - use `searxng-local_search_web` or `searxng-local_answer_web` for quick answers or cross-checks
-- use `firecrawl-local_map` when the correct docs page is unclear
-- use `firecrawl-local_scrape` for a known URL and prefer JSON-style extraction for exact fields or lists
-- use `firecrawl-local_extract` when multiple known URLs should be reduced to one structured answer
-- use `firecrawl-local_agent` or `firecrawl-local_browser_*` only for dynamic, JS-heavy, or multi-step flows
+- use `firecrawl-local_firecrawl_map` when the correct docs page is unclear
+- use `firecrawl-local_firecrawl_scrape` for a known URL and prefer JSON-style extraction for exact fields or lists
+- use `firecrawl-local_firecrawl_extract` when multiple known URLs should be reduced to one structured answer
+- use `firecrawl-local_firecrawl_agent` or `firecrawl-local_firecrawl_interact` only for dynamic, JS-heavy, or multi-step flows
 
 ### Direct Edits
 

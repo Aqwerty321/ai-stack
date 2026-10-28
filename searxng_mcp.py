@@ -1,7 +1,7 @@
 # /// script
 # requires-python = ">=3.12, <3.13"
 # dependencies = [
-#     "mcp",
+#     "mcp<2",
 #     "requests",
 #     "trafilatura",
 # ]
@@ -26,8 +26,12 @@ SESSION.mount("http://", HTTP_ADAPTER)
 SESSION.mount("https://", HTTP_ADAPTER)
 
 SEARXNG_URL = "http://127.0.0.1:8888/search"
+SEARXNG_GENERAL_ENGINES = os.environ.get("SEARXNG_GENERAL_ENGINES", "google,bing,brave,wikipedia")
+FIRECRAWL_SEARCH_URL = os.environ.get(
+    "FIRECRAWL_SEARCH_URL", "http://127.0.0.1:3002/v1/search"
+)
 EMBED_URL = os.environ.get("EMBED_URL", "http://127.0.0.1:8001/v1/embeddings")
-EMBED_MODEL = os.environ.get("EMBED_MODEL", "qwen3-embedding-4b-q4_k_m")
+EMBED_MODEL = os.environ.get("EMBED_MODEL", "qwen3-embedding-0_6b-q8_0")
 EMBED_CANDIDATES = int(os.environ.get("EMBED_CANDIDATES", "6"))
 EMBED_MAX_CHARS = int(os.environ.get("EMBED_MAX_CHARS", "4000"))
 EMBED_QUERY_TASK = os.environ.get(
@@ -35,7 +39,7 @@ EMBED_QUERY_TASK = os.environ.get(
     "Given a web search query, retrieve relevant passages that answer the query",
 )
 RERANK_URL = os.environ.get("RERANK_URL", "http://127.0.0.1:8002/rerank")
-RERANK_MODEL = os.environ.get("RERANK_MODEL", "qwen3-reranker-4b")
+RERANK_MODEL = os.environ.get("RERANK_MODEL", "qwen3-reranker-0.6b")
 USE_RERANKER = os.environ.get("USE_RERANKER", "false").lower() == "true"
 RERANK_CANDIDATES = int(os.environ.get("RERANK_CANDIDATES", "10"))
 RERANK_DOC_CHARS = int(os.environ.get("RERANK_DOC_CHARS", "4000"))
@@ -346,12 +350,39 @@ def _semantic_rank_results(
     return candidates
 
 
-def _fetch_searxng_results(query: str, category: Optional[str]) -> list[dict]:
+def _fetch_searxng_payload(query: str, category: Optional[str]) -> dict:
     params = {"q": query, "format": "json", "categories": category}
-    response = SESSION.get(SEARXNG_URL, params=params, timeout=10)
+    # The general category otherwise waits for DuckDuckGo's 10 s timeout from this
+    # machine; naming the responsive engines answers in under a second. The category
+    # must be dropped: SearXNG adds a category's engines to any named ones.
+    if category in (None, "general") and SEARXNG_GENERAL_ENGINES:
+        params["engines"] = SEARXNG_GENERAL_ENGINES
+        del params["categories"]
+    response = SESSION.get(SEARXNG_URL, params=params, timeout=15)
     response.raise_for_status()
-    data = response.json()
-    return data.get("results", [])
+    return response.json()
+
+
+def _fetch_firecrawl_results(query: str, max_results: int) -> list[dict]:
+    response = SESSION.post(
+        FIRECRAWL_SEARCH_URL,
+        json={"query": query, "limit": max_results},
+        timeout=20,
+    )
+    response.raise_for_status()
+
+    payload = response.json()
+    items = payload.get("data", [])
+    return [
+        {
+            "title": item.get("title") or item.get("url") or "Untitled result",
+            "url": item.get("url") or "",
+            "content": item.get("description") or "",
+            "engine": "firecrawl",
+        }
+        for item in items
+        if item.get("url")
+    ]
 
 
 def _dedupe_results(results: list[dict]) -> list[dict]:
@@ -555,12 +586,23 @@ def _rerank_results(query: str, results: list[dict], max_results: int) -> list[d
 def _search_results(
     query: str, category: Optional[str], max_results: int
 ) -> list[dict]:
-    results = _fetch_searxng_results(query, category)
+    search_payload = _fetch_searxng_payload(query, category)
+    results = search_payload.get("results", [])
     if category == "it" and _it_results_need_fallback(results):
         docs_query = f"{query} site:readthedocs.io OR site:docs.python.org OR site:developer.mozilla.org OR site:github.com"
-        fallback_results = _fetch_searxng_results(query, "general")
-        docs_results = _fetch_searxng_results(docs_query, "general")
+        fallback_results = _fetch_searxng_payload(query, "general").get("results", [])
+        docs_results = _fetch_searxng_payload(docs_query, "general").get("results", [])
         results = _dedupe_results(fallback_results + docs_results + results)
+
+    # Local public-engine SearXNG setups often lose general-web coverage when
+    # engines like Brave/DDG rate-limit or CAPTCHA a single-box instance.
+    # Fall back to the already-running local Firecrawl search backend so the
+    # MCP still returns useful lightweight web results instead of empty sets.
+    if not results and category in (None, "general", "web"):
+        try:
+            results = _fetch_firecrawl_results(query, max(1, max_results))
+        except Exception:
+            results = []
 
     if not results:
         return []
